@@ -1,0 +1,60 @@
+# infra/docker/docker-compose.yml
+version: '3.8'
+
+services:
+  backend-api:
+    build:
+      context: ../../apps/backend-api
+    container_name: backend-api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
+  blockchain-watcher:
+    build:
+      context: ../../apps/blockchain-watcher
+    container_name: blockchain-watcher
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+
+
+  nginx:
+    build:
+      context: ../../infra/nginx
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - backend-api
+      - merchant-dashboard
+    networks:
+      - app-network
